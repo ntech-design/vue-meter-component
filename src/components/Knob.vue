@@ -3,7 +3,7 @@
 
   const DEFAULT_MIN = 0
   const DEFAULT_MAX = 100
-  const DEFAULT_INITIAL_VALUE = 20
+  const DEFAULT_VALUE = 20
 
   // Properties with default values
   interface KnobProps {
@@ -12,8 +12,7 @@
     size?: number
     label?: string
     unit?: '°C' | 'F'
-    initialValue?: number
-    storageKey?: string
+    targetValue?: number
   }
 
   const props = withDefaults(defineProps<KnobProps>(), {
@@ -22,8 +21,7 @@
     size: 50,
     label: 'Temperature Controller',
     unit: '°C',
-    initialValue: DEFAULT_INITIAL_VALUE,
-    storageKey: 'knob_temperature_value',
+    targetValue: DEFAULT_VALUE,
   })
 
   const isValidValue = (value: number, fallback: number) => Number.isFinite(value) ? value : fallback
@@ -34,26 +32,25 @@
     return Math.min(safeBounds.value.max, Math.max(safeBounds.value.min, safeValue))
   }
 
-  const persistValue = () => {
-    currentValue.value = clampValue(currentValue.value)
-    localStorage.setItem(props.storageKey, currentValue.value.toString())
-  }
-
   // Event Handling
-  const emit = defineEmits<{ 'change': [value: number] }>()
+  const emit = defineEmits<{
+    'change': [value: number],
+    'update:targetValue': [value: number]
+  }>()
 
   const handleRelease = () => {
-    persistValue()
+    currentValue.value = clampValue(currentValue.value)
     emit('change', currentValue.value)
+    emit('update:targetValue', currentValue.value)
   }
 
   const handleKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'ArrowUp' || event.key === 'ArrowRight') {
       currentValue.value = clampValue(currentValue.value + 1)
-      persistValue()
+      emit('change', currentValue.value)
     } else if (event.key === 'ArrowDown' || event.key === 'ArrowLeft') {
       currentValue.value = clampValue(currentValue.value - 1)
-      persistValue()
+      emit('change', currentValue.value)
     }
   }
 
@@ -75,27 +72,18 @@
 
     if (
       hasValidBounds.value
-      && Number.isFinite(props.initialValue)
-      && (props.initialValue < props.min || props.initialValue > props.max)
+      && Number.isFinite(props.targetValue)
+      && (props.targetValue < props.min || props.targetValue > props.max)
     ) {
-      messages.push(`Invalid Knob initialValue: ${props.initialValue} must be between ${props.min} and ${props.max}.`)
+      messages.push(`Invalid Knob targetValue: ${props.targetValue} must be between ${props.min} and ${props.max}.`)
     }
 
     return messages
   })
 
-  // Storage / Persist
-  const getStoredValue = (): number => {
-    const stored = localStorage.getItem(props.storageKey)
-    if (stored !== null && stored.trim() !== '') {
-      const parsed = Number(stored)
-      if (!isNaN(parsed)) return clampValue(parsed)
-    }
-    return clampValue(props.initialValue)
-  }
-
   // State Management
-  const currentValue = ref<number>(getStoredValue())
+  const currentValue = ref<number>(clampValue(props.targetValue))
+  watch(() => props.targetValue, (newTarget) => { currentValue.value = clampValue(newTarget) })
   watch(safeBounds, () => { currentValue.value = clampValue(currentValue.value) })
   watch(validationMessages, (messages) => { messages.forEach((message) => console.warn(message)) }, { immediate: true })
 

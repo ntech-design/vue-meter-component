@@ -5,7 +5,7 @@ This component is a flexible UI element to visualize and change temperature data
 
 ## Usage
 ```vue
-<Knob :size="50" :min="20" :max="80" :initial-value="42" />
+<Knob :size="50" :min="20" :max="80" :target-value="42" />
 ```
 
 ## Optional Parameters
@@ -14,8 +14,7 @@ This component is a flexible UI element to visualize and change temperature data
 - **size:** number = Dimension
 - **label:** string = Label for screen reader
 - **unit:** '°C' | 'F' = Temperature unit
-- **initialValue:** number = Initial value
-- **storageKey:** string = Key for localStorage to persist current value
+- **targetValue:** number = Initial value
 
 ---
 
