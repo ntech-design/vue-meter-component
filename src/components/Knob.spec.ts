@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import Knob from './Knob.vue'
-import { setupStorageMock } from '../test/utils/storageMock'
+import Knob from '@/components/Knob.vue'
+import { setupStorageMock } from '@/test/utils/storageMock.ts'
 
 describe('Knob.vue', () => {
   setupStorageMock()
@@ -30,6 +30,92 @@ describe('Knob.vue', () => {
 
       expect(slider.attributes('aria-valuenow')).toBe('42')
       expect(wrapper.text()).toContain('42 ')
+    })
+
+    it('warns about invalid min and max bounds without swapping them', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+      const wrapper = mount(Knob, {
+        props: { min: 30, max: 10, initialValue: 20 }
+      })
+
+      const slider = wrapper.find('[role="slider"]')
+      const nativeInput = wrapper.find('input[type="range"]')
+
+      expect(slider.attributes('aria-valuemin')).toBe('0')
+      expect(slider.attributes('aria-valuemax')).toBe('100')
+      expect(slider.attributes('aria-valuenow')).toBe('20')
+      expect(nativeInput.attributes('min')).toBe('0')
+      expect(nativeInput.attributes('max')).toBe('100')
+      expect(warn).toHaveBeenCalledWith('Invalid Knob bounds: min (30) must be smaller than max (10).')
+    })
+
+    it('warns when min and max are equal', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+      const wrapper = mount(Knob, {
+        props: { min: 10, max: 10, initialValue: 10 }
+      })
+
+      const slider = wrapper.find('[role="slider"]')
+
+      expect(slider.attributes('aria-valuemin')).toBe('0')
+      expect(slider.attributes('aria-valuemax')).toBe('100')
+      expect(slider.attributes('aria-valuenow')).toBe('10')
+      expect(warn).toHaveBeenCalledWith('Invalid Knob bounds: min (10) must be smaller than max (10).')
+    })
+
+    it('clamps initialValue below the minimum bound', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+      const wrapper = mount(Knob, {
+        props: { min: 10, max: 50, initialValue: 5 }
+      })
+
+      expect(wrapper.find('[role="slider"]').attributes('aria-valuenow')).toBe('10')
+      expect(warn).toHaveBeenCalledWith('Invalid Knob initialValue: 5 must be between 10 and 50.')
+    })
+
+    it('clamps initialValue above the maximum bound', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+      const wrapper = mount(Knob, {
+        props: { min: 10, max: 50, initialValue: 75 }
+      })
+
+      expect(wrapper.find('[role="slider"]').attributes('aria-valuenow')).toBe('50')
+      expect(warn).toHaveBeenCalledWith('Invalid Knob initialValue: 75 must be between 10 and 50.')
+    })
+
+    it('clamps a persisted value outside the safe bounds', () => {
+      window.localStorage.setItem('knob_temperature_value', '250')
+
+      const wrapper = mount(Knob, {
+        props: { min: 10, max: 50 }
+      })
+
+      expect(wrapper.find('[role="slider"]').attributes('aria-valuenow')).toBe('50')
+    })
+
+    it('ignores an empty persisted value and falls back to the clamped initialValue', () => {
+      vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+      window.localStorage.setItem('knob_temperature_value', '')
+
+      const wrapper = mount(Knob, {
+        props: { min: 10, max: 50, initialValue: 75 }
+      })
+
+      expect(wrapper.find('[role="slider"]').attributes('aria-valuenow')).toBe('50')
+    })
+
+    it('uses finite fallback bounds when min or max are not finite numbers', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+      const wrapper = mount(Knob, {
+        props: { min: Number.NaN, max: Number.POSITIVE_INFINITY, initialValue: 20 }
+      })
+
+      const slider = wrapper.find('[role="slider"]')
+
+      expect(slider.attributes('aria-valuemin')).toBe('0')
+      expect(slider.attributes('aria-valuemax')).toBe('100')
+      expect(slider.attributes('aria-valuenow')).toBe('20')
+      expect(warn).toHaveBeenCalledWith('Invalid Knob bounds: min (NaN) must be smaller than max (Infinity).')
     })
   })
 
@@ -71,6 +157,18 @@ describe('Knob.vue', () => {
 
       expect(slider.attributes('aria-valuenow')).toBe('100')
     })
+
+    it('clamping: does not go below the minimum bound limit', async () => {
+      const wrapper = mount(Knob, {
+        props: { initialValue: 1, min: 0 }
+      })
+      const slider = wrapper.find('[role="slider"]')
+
+      await slider.trigger('keydown', { key: 'ArrowDown' })
+      await slider.trigger('keydown', { key: 'ArrowDown' })
+
+      expect(slider.attributes('aria-valuenow')).toBe('0')
+    })
   })
 
   describe('SVG Graphics & Coordinate Math', () => {
@@ -108,6 +206,20 @@ describe('Knob.vue', () => {
       expect(wrapper.emitted('change')).toBeTruthy()
       expect(wrapper.emitted('change')?.[0]).toEqual([35])
       expect(window.localStorage.getItem('custom_storage_key')).toBe('35')
+    })
+
+    it('clamps and emits the safe value on native slider change', async () => {
+      const wrapper = mount(Knob, {
+        props: { min: 10, max: 50, initialValue: 20, storageKey: 'bounded_storage_key' }
+      })
+
+      const nativeInput = wrapper.find('input[type="range"]')
+
+      await nativeInput.setValue(75)
+      await nativeInput.trigger('change')
+
+      expect(wrapper.emitted('change')?.[0]).toEqual([50])
+      expect(window.localStorage.getItem('bounded_storage_key')).toBe('50')
     })
   })
 })

@@ -1,5 +1,9 @@
 <script setup lang="ts">
-  import { computed, ref } from 'vue'
+  import { computed, ref, watch } from 'vue'
+
+  const DEFAULT_MIN = 0
+  const DEFAULT_MAX = 100
+  const DEFAULT_INITIAL_VALUE = 20
 
   // Properties with default values
   interface KnobProps {
@@ -13,58 +17,100 @@
   }
 
   const props = withDefaults(defineProps<KnobProps>(), {
-    min: 0,
-    max: 100,
+    min: DEFAULT_MIN,
+    max: DEFAULT_MAX,
     size: 50,
     label: 'Temperature Controller',
     unit: '°C',
-    initialValue: 20,
+    initialValue: DEFAULT_INITIAL_VALUE,
     storageKey: 'knob_temperature_value',
   })
+
+  const isValidValue = (value: number, fallback: number) => Number.isFinite(value) ? value : fallback
+  const hasValidBounds = computed(() => Number.isFinite(props.min) && Number.isFinite(props.max) && props.min < props.max)
+
+  const clampValue = (value: number) => {
+    const safeValue = isValidValue(value, safeBounds.value.min)
+    return Math.min(safeBounds.value.max, Math.max(safeBounds.value.min, safeValue))
+  }
+
+  const persistValue = () => {
+    currentValue.value = clampValue(currentValue.value)
+    localStorage.setItem(props.storageKey, currentValue.value.toString())
+  }
 
   // Event Handling
   const emit = defineEmits<{ 'change': [value: number] }>()
 
   const handleRelease = () => {
-    localStorage.setItem(props.storageKey, currentValue.value.toString())
+    persistValue()
     emit('change', currentValue.value)
   }
 
   const handleKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'ArrowUp' || event.key === 'ArrowRight') {
-      currentValue.value = Math.min(props.max, currentValue.value + 1)
-      localStorage.setItem(props.storageKey, currentValue.value.toString())
+      currentValue.value = clampValue(currentValue.value + 1)
+      persistValue()
     } else if (event.key === 'ArrowDown' || event.key === 'ArrowLeft') {
-      currentValue.value = Math.max(props.min, currentValue.value - 1)
-      localStorage.setItem(props.storageKey, currentValue.value.toString())
+      currentValue.value = clampValue(currentValue.value - 1)
+      persistValue()
     }
   }
+
+  // Validation
+  const safeBounds = computed(() => {
+    if (hasValidBounds.value) {
+      return { min: props.min, max: props.max }
+    }
+
+    return { min: DEFAULT_MIN, max: DEFAULT_MAX }
+  })
+
+  const validationMessages = computed(() => {
+    const messages: string[] = []
+
+    if (!hasValidBounds.value) {
+      messages.push(`Invalid Knob bounds: min (${props.min}) must be smaller than max (${props.max}).`)
+    }
+
+    if (
+      hasValidBounds.value
+      && Number.isFinite(props.initialValue)
+      && (props.initialValue < props.min || props.initialValue > props.max)
+    ) {
+      messages.push(`Invalid Knob initialValue: ${props.initialValue} must be between ${props.min} and ${props.max}.`)
+    }
+
+    return messages
+  })
 
   // Storage / Persist
   const getStoredValue = (): number => {
     const stored = localStorage.getItem(props.storageKey)
-    if (stored !== null) {
-      const parsed = parseInt(stored, 10)
-      if (!isNaN(parsed)) return parsed
+    if (stored !== null && stored.trim() !== '') {
+      const parsed = Number(stored)
+      if (!isNaN(parsed)) return clampValue(parsed)
     }
-    return props.initialValue
+    return clampValue(props.initialValue)
   }
 
   // State Management
   const currentValue = ref<number>(getStoredValue())
+  watch(safeBounds, () => { currentValue.value = clampValue(currentValue.value) })
+  watch(validationMessages, (messages) => { messages.forEach((message) => console.warn(message)) }, { immediate: true })
 
   // Relative attributes
-  const knobStroke = props.size / 15;
+  const knobStroke = props.size / 15
   const knobPosition = computed<number>(() => props.size / 2)
-  const knobRadius = computed<number>(() => (props.size - knobStroke) / 2);
+  const knobRadius = computed<number>(() => (props.size - knobStroke) / 2)
 
   const getCurrentValue = computed<string>(() => `${currentValue.value} ${props.unit}`)
   const getRotationAngle = computed<number>(() => {
-    const startAngle = 45;      // Start Position: bottom left
-    const totalRotation = 270;  // Rotation Range: 360° - 90°
-    const percentage = (currentValue.value - props.min) / (props.max - props.min);
+    const startAngle = 45      // Start Position: bottom left
+    const totalRotation = 270  // Rotation Range: 360° - 90°
+    const percentage = (currentValue.value - safeBounds.value.min) / (safeBounds.value.max - safeBounds.value.min)
 
-    return startAngle + (percentage * totalRotation);
+    return startAngle + (percentage * totalRotation)
   });
 </script>
 
@@ -74,8 +120,8 @@
     class="knob"
     role="slider"
     :aria-valuenow="currentValue"
-    :aria-valuemin="min"
-    :aria-valuemax="max"
+    :aria-valuemin="safeBounds.min"
+    :aria-valuemax="safeBounds.max"
     :aria-label="label"
     tabindex="0"
     @keydown.up.prevent="handleKeyDown"
@@ -86,8 +132,8 @@
     <input
       type="range"
       v-model.number="currentValue"
-      :min="min"
-      :max="max"
+      :min="safeBounds.min"
+      :max="safeBounds.max"
       :aria-label="label"
       class="knob__input"
       @change="handleRelease"

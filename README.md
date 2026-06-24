@@ -67,7 +67,7 @@ This component is a flexible UI element to visualize and change temperature data
 TOTAL: 3h 30'
 
 ### Issues:
-- [FIXED] Bug in the calculation - fixed by AI support
 - [FIXED] Spend too much time trying to align the min/max markers - solved it by giving the circle a background color
 - [FIXED] Forgot to support dark mode
-- [OPEN] Alias '@' does not work
+- [FIXED] Bug in the calculation - fixed with AI support
+- [FIXED] Alias '@' does not work - fixed with AI support

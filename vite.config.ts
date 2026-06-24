@@ -9,7 +9,9 @@ export default defineConfig(({ mode }) => {
     base: './',
     plugins: [ vue() ],
     resolve: {
-      tsconfigPaths: true,
+      alias: {
+        '@': path.resolve(__dirname, 'src'),
+      },
       extensions: ['.js', '.ts', '.json', '.vue']
     },
     server: {
