@@ -3,5 +3,5 @@
 </script>
 
 <template>
-  <Knob :size="50" :min="20" :max="80" />
+  <Knob :size="50" :min="20" :max="80" :initial-value="42" />
 </template>

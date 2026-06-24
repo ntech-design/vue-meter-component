@@ -5,7 +5,7 @@ This component is a flexible UI element to visualize and change temperature data
 
 ## Usage
 ```vue
-<Knob :size="50" :min="0" :max="100" />
+<Knob :size="50" :min="20" :max="80" :initial-value="42" />
 ```
 
 ## Optional Parameters
