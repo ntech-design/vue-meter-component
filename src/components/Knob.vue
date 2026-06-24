@@ -48,9 +48,11 @@
     if (event.key === 'ArrowUp' || event.key === 'ArrowRight') {
       currentValue.value = clampValue(currentValue.value + 1)
       emit('change', currentValue.value)
+      emit('update:targetValue', currentValue.value)
     } else if (event.key === 'ArrowDown' || event.key === 'ArrowLeft') {
       currentValue.value = clampValue(currentValue.value - 1)
       emit('change', currentValue.value)
+      emit('update:targetValue', currentValue.value)
     }
   }
 
