@@ -158,9 +158,7 @@ describe('Knob.vue', () => {
 
   describe('Interaction & Side Effects', () => {
     it('emits a change event and persists value on native slider change', async () => {
-      const wrapper = mount(Knob, {
-        props: { storageKey: 'custom_storage_key' }
-      })
+      const wrapper = mount(Knob)
 
       const nativeInput = wrapper.find('input[type="range"]')
       expect(nativeInput.exists()).toBe(true)

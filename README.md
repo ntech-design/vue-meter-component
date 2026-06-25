@@ -75,3 +75,4 @@ TOTAL: 3h 30'
 - Add explicit fallback values for CSS Vars in the components (e.g., `color: var(--accent, #aa3bff);`)
 - Add a centralized messaging or logging service to extract the logic and delegate messages in a better way
 - Use validation library with schemas (e.g. zod) or the component's props and pass errors to a global message handler
+- Refactoring: Tests are too specific (Brittle)

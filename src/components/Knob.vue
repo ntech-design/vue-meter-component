@@ -26,37 +26,6 @@
 
   const isValidValue = (value: number, fallback: number) => Number.isFinite(value) ? value : fallback
   const hasValidBounds = computed(() => Number.isFinite(props.min) && Number.isFinite(props.max) && props.min < props.max)
-
-  const clampValue = (value: number) => {
-    const safeValue = isValidValue(value, safeBounds.value.min)
-    return Math.min(safeBounds.value.max, Math.max(safeBounds.value.min, safeValue))
-  }
-
-  // Event Handling
-  const emit = defineEmits<{
-    'change': [value: number],
-    'update:targetValue': [value: number]
-  }>()
-
-  const handleRelease = () => {
-    currentValue.value = clampValue(currentValue.value)
-    emit('change', currentValue.value)
-    emit('update:targetValue', currentValue.value)
-  }
-
-  const handleKeyDown = (event: KeyboardEvent) => {
-    if (event.key === 'ArrowUp' || event.key === 'ArrowRight') {
-      currentValue.value = clampValue(currentValue.value + 1)
-      emit('change', currentValue.value)
-      emit('update:targetValue', currentValue.value)
-    } else if (event.key === 'ArrowDown' || event.key === 'ArrowLeft') {
-      currentValue.value = clampValue(currentValue.value - 1)
-      emit('change', currentValue.value)
-      emit('update:targetValue', currentValue.value)
-    }
-  }
-
-  // Validation
   const safeBounds = computed(() => {
     if (hasValidBounds.value) {
       return { min: props.min, max: props.max }
@@ -65,6 +34,32 @@
     return { min: DEFAULT_MIN, max: DEFAULT_MAX }
   })
 
+  const clampValue = (value: number) => {
+    const safeValue = isValidValue(value, safeBounds.value.min)
+    return Math.min(safeBounds.value.max, Math.max(safeBounds.value.min, safeValue))
+  }
+
+  // Event Handling
+  const emit = defineEmits<{
+    'change': [value: number]
+  }>()
+
+  const handleRelease = () => {
+    currentValue.value = clampValue(currentValue.value)
+    emit('change', currentValue.value)
+  }
+
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (event.key === 'ArrowUp' || event.key === 'ArrowRight') {
+      currentValue.value = clampValue(currentValue.value + 1)
+      emit('change', currentValue.value)
+    } else if (event.key === 'ArrowDown' || event.key === 'ArrowLeft') {
+      currentValue.value = clampValue(currentValue.value - 1)
+      emit('change', currentValue.value)
+    }
+  }
+
+  // Validation
   const validationMessages = computed(() => {
     const messages: string[] = []
 
@@ -129,7 +124,7 @@
       @change="handleRelease"
     />
 
-    <svg :width="size" :height="size" class="knop__ui">
+    <svg :width="size" :height="size" class="knob__ui">
       <line
         :x1="0"
         :y1="size"
