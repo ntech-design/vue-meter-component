@@ -13,7 +13,7 @@ This component is a flexible UI element to visualize and change temperature data
 - **max:** number = Maximum value
 - **size:** number = Dimension
 - **label:** string = Label for screen reader
-- **unit:** '°C' | 'F' = Temperature unit
+- **unit:** '°C' | '°F' = Temperature unit
 - **targetValue:** number = Initial value
 
 ---
@@ -36,11 +36,10 @@ This component is a flexible UI element to visualize and change temperature data
 
 - Static values: minValue, maxValue, unit
 - State value: currentValue as number
-- Sustainability: store value in localStorage
 
 ### State Transitions
 
-- changed by user inteactions
+- changed by user interactions
 
 ### Component Framework
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { computed, ref, watch } from 'vue'
 
+  // Default values
   const DEFAULT_MIN = 0
   const DEFAULT_MAX = 100
   const DEFAULT_VALUE = 20
@@ -11,7 +12,7 @@
     max?: number
     size?: number
     label?: string
-    unit?: '°C' | 'F'
+    unit?: '°C' | '°F'
     targetValue?: number
   }
 
@@ -41,15 +42,15 @@
 
   // Event Handling
   const emit = defineEmits<{
-    'change': [value: number]
+    change: [value: number]
   }>()
 
-  const handleRelease = () => {
+  const handleRelease = (): void => {
     currentValue.value = clampValue(currentValue.value)
     emit('change', currentValue.value)
   }
 
-  const handleKeyDown = (event: KeyboardEvent) => {
+  const handleKeyDown = (event: KeyboardEvent): void => {
     if (event.key === 'ArrowUp' || event.key === 'ArrowRight') {
       currentValue.value = clampValue(currentValue.value + 1)
       emit('change', currentValue.value)
@@ -96,7 +97,7 @@
     const percentage = (currentValue.value - safeBounds.value.min) / (safeBounds.value.max - safeBounds.value.min)
 
     return startAngle + (percentage * totalRotation)
-  });
+  })
 </script>
 
 
