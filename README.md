@@ -16,6 +16,9 @@ This component is a flexible UI element to visualize and change temperature data
 - **unit:** '°C' | '°F' = Temperature unit
 - **targetValue:** number = Initial value
 
+## Events
+- **change:** void = triggered on mouse and key change
+
 ---
 
 ### Functional Requirements:
