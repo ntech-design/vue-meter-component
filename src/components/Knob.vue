@@ -108,7 +108,7 @@
     :aria-valuenow="currentValue"
     :aria-valuemin="safeBounds.min"
     :aria-valuemax="safeBounds.max"
-    :aria-label="label"
+    :aria-valuetext="`${label}: ${currentValue} ${props.unit}`"
     tabindex="0"
     @keydown.up.prevent="handleKeyDown"
     @keydown.down.prevent="handleKeyDown"
@@ -120,12 +120,13 @@
       v-model.number="currentValue"
       :min="safeBounds.min"
       :max="safeBounds.max"
-      :aria-label="label"
+      aria-hidden="true"
+      tabindex="-1"
       class="knob__input"
       @change="handleRelease"
     />
 
-    <svg :width="size" :height="size" class="knob__ui">
+    <svg :width="size" :height="size" class="knob__ui" aria-hidden="true">
       <line
         :x1="0"
         :y1="size"
@@ -168,7 +169,7 @@
       </g>
     </svg>
 
-    <span class="knob__value" aria-live="polite">{{ getCurrentValue }}</span>
+    <span class="knob__value" aria-hidden="true">{{ getCurrentValue }}</span>
   </section>
 </template>
 
