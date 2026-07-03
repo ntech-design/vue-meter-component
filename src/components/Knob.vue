@@ -50,16 +50,6 @@
     emit('change', currentValue.value)
   }
 
-  const handleKeyDown = (event: KeyboardEvent): void => {
-    if (event.key === 'ArrowUp' || event.key === 'ArrowRight') {
-      currentValue.value = clampValue(currentValue.value + 1)
-      emit('change', currentValue.value)
-    } else if (event.key === 'ArrowDown' || event.key === 'ArrowLeft') {
-      currentValue.value = clampValue(currentValue.value - 1)
-      emit('change', currentValue.value)
-    }
-  }
-
   // Validation
   const validationMessages = computed(() => {
     const messages: string[] = []
@@ -110,10 +100,6 @@
     :aria-valuemax="safeBounds.max"
     :aria-valuetext="`${label}: ${currentValue} ${props.unit}`"
     tabindex="0"
-    @keydown.up.prevent="handleKeyDown"
-    @keydown.down.prevent="handleKeyDown"
-    @keydown.right.prevent="handleKeyDown"
-    @keydown.left.prevent="handleKeyDown"
   >
     <input
       type="range"
