@@ -1,7 +1,15 @@
 # Generic Vue 3 Knob Meter Component
+![License](https://img.shields.io/badge/license-MIT-green)
+![Vue](https://img.shields.io/badge/-Vue.js-4fc08d?style=flat&logo=vuedotjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/typescript-3178C6?logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/vite-646CFF?logo=vite&logoColor=white)
+![SCSS](https://img.shields.io/badge/scss-CC6699?logo=sass&logoColor=white)
 
 Dynamic Vue 3 Component to visualize a value as meter knob UI.
 This component is a flexible UI element to visualize and change temperature data.
+
+![Knob Component](./public/bright.png?raw=true "Vue 3 Knob Meter - bright")
+![Knob Component](./public/dark.png?raw=true "Vue 3 Knob Meter - dark")
 
 ## Usage
 ```vue
