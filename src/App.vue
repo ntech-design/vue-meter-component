@@ -15,6 +15,7 @@
     :size="50"
     :min="20"
     :max="80"
+    :interactive="true"
     :target-value="currentTemperature"
     @change="handleKnobChange"
   />

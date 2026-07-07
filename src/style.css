@@ -1,6 +1,6 @@
 :root {
   --bg: #ffffff;
-  --border-radius: 5px;
+  --border-radius: 0.25rem;
   --ui-border: #000000;
   --ui-bg: #ffffff;
   --ui-bg-hover: #cccccc;

@@ -14,6 +14,7 @@
     label?: string
     unit?: '°C' | '°F'
     targetValue?: number
+    interactive?: boolean
   }
 
   const props = withDefaults(defineProps<KnobProps>(), {
@@ -23,6 +24,7 @@
     label: 'Temperature Controller',
     unit: '°C',
     targetValue: DEFAULT_VALUE,
+    interactive: false
   })
 
   const isValidValue = (value: number, fallback: number) => Number.isFinite(value) ? value : fallback
@@ -94,6 +96,7 @@
 <template>
   <section
     class="knob"
+    :class="props.interactive ? '' : 'knob--disabled'"
     role="slider"
     :aria-valuenow="currentValue"
     :aria-valuemin="safeBounds.min"
@@ -102,6 +105,7 @@
     tabindex="0"
   >
     <input
+      v-if="props.interactive"
       type="range"
       v-model.number="currentValue"
       :min="safeBounds.min"
@@ -161,17 +165,17 @@
 
 <style lang="scss" scoped>
 .knob {
-  $_self: &;
+  $self: &;
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1rem;
 
-  &:hover &__value { border-color: var(--accent-border); }
-  &:hover &__ui__circle { fill: var(--ui-bg-hover); }
+  &:not(&--disabled):hover &__value { border-color: var(--accent-border, #4488FF); }
+  &:not(&--disabled):hover &__ui__circle { fill: var(--ui-bg-hover, #BBCCFF); }
   &:focus-visible &__value {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--accent, #4488FF);
     outline-offset: 2px;
   }
 
@@ -182,28 +186,27 @@
     width: 100%;
     height: 100%;
     opacity: 0;
-    cursor: pointer;
   }
 
   &__value {
-    font-family: var(--mono);
+    font-family: var(--mono, monospace);
     display: inline-flex;
     font-size: 1rem;
     padding: 5px 10px;
-    border-radius: var(--border-radius);
-    color: var(--accent);
-    background: var(--accent-bg);
+    border-radius: var(--border-radius, 0.25rem);
+    color: var(--accent, #4488FF);
+    background: var(--accent-bg, #4488FF33);
     border: 2px solid transparent;
     transition: border-color 0.3s;
   }
 
   &__ui {
     &__circle {
-      fill: var(--ui-bg);
-      stroke: var(--ui-border);
+      fill: var(--ui-bg, #CCCCCC);
+      stroke: var(--ui-border, #444444);
       transition: fill 0.3s;
     }
-    &__marker { stroke: var(--accent); }
+    &__marker { stroke: var(--accent, #4488FF); }
   }
 }
 </style>

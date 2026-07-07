@@ -23,6 +23,16 @@ This component is a flexible UI element to visualize and change temperature data
 - **label:** string = Label for screen reader
 - **unit:** '°C' | '°F' = Temperature unit
 - **targetValue:** number = Initial value
+- **interactive:** boolean = set component to read-only if set to `false`
+
+## Default values
+- **min:** `0`
+- **max:** `100`
+- **size:** `50`
+- **label:** `Temperature Controller`
+- **unit:** `°C`
+- **targetValue:** `20`
+- **interactive:** `false`
 
 ## Events
 - **change:** void = triggered on mouse and key change
@@ -82,7 +92,6 @@ TOTAL: 3h 30'
 - [FIXED] Alias '@' does not work - fixed with AI support
 
 ### Improvements:
-- Add explicit fallback values for CSS Vars in the components (e.g., `color: var(--accent, #aa3bff);`)
 - Add a centralized messaging or logging service to extract the logic and delegate messages in a better way
 - Use validation library with schemas (e.g. zod) or the component's props and pass errors to a global message handler
 - Refactoring: Tests are too specific (Brittle)
