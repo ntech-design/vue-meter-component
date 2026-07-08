@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import Knob from '@/components/Knob.vue'
+import Knob from '@/components/Knob/Knob.vue'
 
 describe('Knob.vue', () => {
   describe('Accessibility (a11y) & Initialization', () => {

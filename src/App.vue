@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { ref } from 'vue'
-  import Knob from '@/components/Knob.vue'
+  import Knob from '@/components/Knob/Knob.vue'
+  import Notify from '@/components/Notify/Notify.vue'
 
   const currentTemperature = ref(42)
 
@@ -19,4 +20,6 @@
     :target-value="currentTemperature"
     @change="handleKnobChange"
   />
+
+  <Notify />
 </template>

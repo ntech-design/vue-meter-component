@@ -1,21 +1,15 @@
 <script setup lang="ts">
   import { computed, ref, watch } from 'vue'
+  import type { KnobProps, KnobEmits } from "@/components/Knob/Knob.types.ts";
+  import { useNotify } from '@/composables/useNotify.ts'
 
   // Default values
   const DEFAULT_MIN = 0
   const DEFAULT_MAX = 100
   const DEFAULT_VALUE = 20
 
-  // Properties with default values
-  interface KnobProps {
-    min?: number
-    max?: number
-    size?: number
-    label?: string
-    unit?: '°C' | '°F'
-    targetValue?: number
-    interactive?: boolean
-  }
+  const { showError } = useNotify()
+  const sentMessages = new Set<string>()
 
   const props = withDefaults(defineProps<KnobProps>(), {
     min: DEFAULT_MIN,
@@ -43,9 +37,7 @@
   }
 
   // Event Handling
-  const emit = defineEmits<{
-    change: [value: number]
-  }>()
+  const emit = defineEmits<KnobEmits>()
 
   const handleRelease = (): void => {
     currentValue.value = clampValue(currentValue.value)
@@ -75,7 +67,14 @@
   const currentValue = ref<number>(clampValue(props.targetValue))
   watch(() => props.targetValue, (newTarget) => { currentValue.value = clampValue(newTarget) })
   watch(safeBounds, () => { currentValue.value = clampValue(currentValue.value) })
-  watch(validationMessages, (messages) => { messages.forEach((message) => console.warn(message)) }, { immediate: true })
+  watch(validationMessages, (messages) => {
+    messages.forEach((message) => {
+      if (!sentMessages.has(message)) {
+        showError(message)
+        sentMessages.add(message)
+      }
+    })
+  }, { immediate: true })
 
   // Relative attributes
   const knobStroke = props.size / 15
@@ -110,7 +109,6 @@
       v-model.number="currentValue"
       :min="safeBounds.min"
       :max="safeBounds.max"
-      aria-hidden="true"
       tabindex="-1"
       class="knob__input"
       @change="handleRelease"
@@ -189,7 +187,7 @@
   }
 
   &__value {
-    font-family: var(--mono, monospace);
+    font-family: var(--mono, monospace), monospace;
     display: inline-flex;
     font-size: 1rem;
     padding: 5px 10px;
