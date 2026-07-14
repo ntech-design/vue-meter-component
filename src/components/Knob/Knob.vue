@@ -54,8 +54,7 @@
 
     if (
       hasValidBounds.value
-      && Number.isFinite(props.targetValue)
-      && (props.targetValue < props.min || props.targetValue > props.max)
+      && (!Number.isFinite(props.targetValue) || props.targetValue < props.min || props.targetValue > props.max)
     ) {
       messages.push(`Invalid Knob targetValue: ${props.targetValue} must be between ${props.min} and ${props.max}.`)
     }
@@ -101,7 +100,9 @@
     :aria-valuemin="safeBounds.min"
     :aria-valuemax="safeBounds.max"
     :aria-valuetext="`${label}: ${currentValue} ${props.unit}`"
+    :aria-disabled="!props.interactive"
     tabindex="0"
+    data-testid="knob-slider"
   >
     <input
       v-if="props.interactive"
@@ -111,10 +112,11 @@
       :max="safeBounds.max"
       tabindex="-1"
       class="knob__input"
+      data-testid="knob-input"
       @change="handleRelease"
     />
 
-    <svg :width="size" :height="size" class="knob__ui" aria-hidden="true">
+    <svg :width="size" :height="size" class="knob__ui" aria-hidden="true" data-testid="knob-ui">
       <line
         :x1="0"
         :y1="size"
@@ -157,7 +159,7 @@
       </g>
     </svg>
 
-    <span class="knob__value" aria-hidden="true">{{ getCurrentValue }}</span>
+    <span class="knob__value" aria-hidden="true" data-testid="knob-value">{{ getCurrentValue }}</span>
   </section>
 </template>
 

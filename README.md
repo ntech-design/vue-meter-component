@@ -92,5 +92,4 @@ TOTAL: 3h 30'
 - [FIXED] Alias '@' does not work - fixed with AI support
 
 ### Improvements:
-- Use validation library with schemas (e.g. zod) or the component's props and pass errors to a global message handler
-- Refactoring: Tests are too specific (Brittle)
+- Add validation library with schema (e.g. zod) or the component's props and pass errors to a global message handler

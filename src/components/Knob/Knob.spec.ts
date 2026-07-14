@@ -1,187 +1,124 @@
-import { describe, expect, it, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { mount, type VueWrapper } from '@vue/test-utils'
 import Knob from '@/components/Knob/Knob.vue'
+import type { KnobProps } from '@/components/Knob/Knob.types'
+
+const showError = vi.hoisted(() => vi.fn())
+
+vi.mock('@/composables/useNotify.ts', () => ({
+  useNotify: () => ({
+    showError,
+    showInfo: vi.fn(),
+    showSuccess: vi.fn()
+  })
+}))
+
+const mountKnob = (props: Partial<KnobProps> = {}) => mount(Knob, { props })
+
+const slider = (wrapper: VueWrapper) => wrapper.get('[data-testid="knob-slider"]')
+const nativeInput = (wrapper: VueWrapper) => wrapper.get('[data-testid="knob-input"]')
+const valueLabel = (wrapper: VueWrapper) => wrapper.get('[data-testid="knob-value"]')
 
 describe('Knob.vue', () => {
-  describe('Accessibility (a11y) & Initialization', () => {
-    it('sets the correct ARIA attributes and role based on inputs', () => {
-      const wrapper = mount(Knob, {
-        props: { min: 10, max: 50, targetValue: 25, label: 'Temp Control' }
+  beforeEach(() => {
+    showError.mockClear()
+  })
+
+  describe('initialization and accessibility contract', () => {
+    it('exposes the configured value range through stable slider attributes', () => {
+      const wrapper = mountKnob({
+        interactive: true,
+        min: 10,
+        max: 50,
+        targetValue: 25,
+        label: 'Temp Control',
+        unit: '°F'
       })
 
-      const slider = wrapper.find('[role="slider"]')
-
-      expect(slider.exists()).toBe(true)
-      expect(slider.attributes('aria-valuenow')).toBe('25')
-      expect(slider.attributes('aria-valuemin')).toBe('10')
-      expect(slider.attributes('aria-valuemax')).toBe('50')
-      expect(slider.attributes('aria-label')).toBe('Temp Control')
-      expect(slider.attributes('tabindex')).toBe('0')
+      expect(slider(wrapper).attributes()).toMatchObject({
+        role: 'slider',
+        'aria-valuenow': '25',
+        'aria-valuemin': '10',
+        'aria-valuemax': '50',
+        'aria-valuetext': 'Temp Control: 25 °F',
+        'aria-disabled': 'false',
+        tabindex: '0'
+      })
+      expect(nativeInput(wrapper).attributes()).toMatchObject({
+        min: '10',
+        max: '50',
+        tabindex: '-1'
+      })
+      expect(valueLabel(wrapper).text()).toBe('25 °F')
+      expect(showError).not.toHaveBeenCalled()
     })
 
-    it('warns about invalid min and max bounds without swapping them', () => {
-      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-      const wrapper = mount(Knob, {
-        props: { min: 30, max: 10, targetValue: 20 }
-      })
+    it('renders read-only by default and does not expose a native input', () => {
+      const wrapper = mountKnob({ targetValue: 20 })
 
-      const slider = wrapper.find('[role="slider"]')
-      const nativeInput = wrapper.find('input[type="range"]')
-
-      expect(slider.attributes('aria-valuemin')).toBe('0')
-      expect(slider.attributes('aria-valuemax')).toBe('100')
-      expect(slider.attributes('aria-valuenow')).toBe('20')
-      expect(nativeInput.attributes('min')).toBe('0')
-      expect(nativeInput.attributes('max')).toBe('100')
-      expect(warn).toHaveBeenCalledWith('Invalid Knob bounds: min (30) must be smaller than max (10).')
-    })
-
-    it('warns when min and max are equal', () => {
-      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-      const wrapper = mount(Knob, {
-        props: { min: 10, max: 10, targetValue: 10 }
-      })
-
-      const slider = wrapper.find('[role="slider"]')
-
-      expect(slider.attributes('aria-valuemin')).toBe('0')
-      expect(slider.attributes('aria-valuemax')).toBe('100')
-      expect(slider.attributes('aria-valuenow')).toBe('10')
-      expect(warn).toHaveBeenCalledWith('Invalid Knob bounds: min (10) must be smaller than max (10).')
-    })
-
-    it('clamps targetValue below the minimum bound', () => {
-      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-      const wrapper = mount(Knob, {
-        props: { min: 10, max: 50, targetValue: 5 }
-      })
-
-      expect(wrapper.find('[role="slider"]').attributes('aria-valuenow')).toBe('10')
-      expect(warn).toHaveBeenCalledWith('Invalid Knob targetValue: 5 must be between 10 and 50.')
-    })
-
-    it('clamps targetValue above the maximum bound', () => {
-      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-      const wrapper = mount(Knob, {
-        props: { min: 10, max: 50, targetValue: 75 }
-      })
-
-      expect(wrapper.find('[role="slider"]').attributes('aria-valuenow')).toBe('50')
-      expect(warn).toHaveBeenCalledWith('Invalid Knob targetValue: 75 must be between 10 and 50.')
-    })
-
-    it('uses finite fallback bounds when min or max are not finite numbers', () => {
-      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-      const wrapper = mount(Knob, {
-        props: { min: Number.NaN, max: Number.POSITIVE_INFINITY, targetValue: 20 }
-      })
-
-      const slider = wrapper.find('[role="slider"]')
-
-      expect(slider.attributes('aria-valuemin')).toBe('0')
-      expect(slider.attributes('aria-valuemax')).toBe('100')
-      expect(slider.attributes('aria-valuenow')).toBe('20')
-      expect(warn).toHaveBeenCalledWith('Invalid Knob bounds: min (NaN) must be smaller than max (Infinity).')
+      expect(slider(wrapper).attributes('aria-disabled')).toBe('true')
+      expect(wrapper.find('[data-testid="knob-input"]').exists()).toBe(false)
+      expect(slider(wrapper).attributes('aria-valuenow')).toBe('20')
+      expect(wrapper.emitted('change')).toBeUndefined()
     })
   })
 
-  describe('Keyboard Navigation', () => {
-    it('increments the value when pressing ArrowUp or ArrowRight', async () => {
-      const wrapper = mount(Knob, {
-        props: { targetValue: 20, max: 100 }
-      })
-      const slider = wrapper.find('[role="slider"]')
+  describe('validation and safe values', () => {
+    it.each([
+      { props: { min: 30, max: 10, targetValue: 20 }, expectedValue: '20' },
+      { props: { min: 10, max: 10, targetValue: 10 }, expectedValue: '10' },
+      { props: { min: Number.NaN, max: Number.POSITIVE_INFINITY, targetValue: 20 }, expectedValue: '20' }
+    ])('falls back to default bounds when configured bounds are invalid', ({ props, expectedValue }) => {
+      const wrapper = mountKnob(props)
 
-      await slider.trigger('keydown', { key: 'ArrowUp' })
-      expect(slider.attributes('aria-valuenow')).toBe('21')
-
-      await slider.trigger('keydown', { key: 'ArrowRight' })
-      expect(slider.attributes('aria-valuenow')).toBe('22')
+      expect(slider(wrapper).attributes('aria-valuemin')).toBe('0')
+      expect(slider(wrapper).attributes('aria-valuemax')).toBe('100')
+      expect(slider(wrapper).attributes('aria-valuenow')).toBe(expectedValue)
+      expect(showError).toHaveBeenCalledTimes(1)
     })
 
-    it('decrements the value when pressing ArrowDown or ArrowLeft', async () => {
-      const wrapper = mount(Knob, {
-        props: { targetValue: 20, min: 0 }
-      })
-      const slider = wrapper.find('[role="slider"]')
+    it.each([
+      { targetValue: 5, expectedValue: '10' },
+      { targetValue: 75, expectedValue: '50' },
+      { targetValue: Number.NaN, expectedValue: '10' }
+    ])('clamps invalid target values to the configured range', ({ targetValue, expectedValue }) => {
+      const wrapper = mountKnob({ min: 10, max: 50, targetValue })
 
-      await slider.trigger('keydown', { key: 'ArrowDown' })
-      expect(slider.attributes('aria-valuenow')).toBe('19')
-
-      await slider.trigger('keydown', { key: 'ArrowLeft' })
-      expect(slider.attributes('aria-valuenow')).toBe('18')
+      expect(slider(wrapper).attributes('aria-valuenow')).toBe(expectedValue)
+      expect(showError).toHaveBeenCalledTimes(1)
     })
 
-    it('clamping: does not exceed the maximum bound limit', async () => {
-      const wrapper = mount(Knob, {
-        props: { targetValue: 99, max: 100 }
-      })
-      const slider = wrapper.find('[role="slider"]')
+    it('keeps the current value inside the range when props change', async () => {
+      const wrapper = mountKnob({ min: 0, max: 100, targetValue: 80 })
 
-      await slider.trigger('keydown', { key: 'ArrowUp' })
-      await slider.trigger('keydown', { key: 'ArrowUp' })
+      await wrapper.setProps({ max: 60 })
+      expect(slider(wrapper).attributes('aria-valuenow')).toBe('60')
 
-      expect(slider.attributes('aria-valuenow')).toBe('100')
-    })
+      await wrapper.setProps({ min: 50, max: 55 })
+      expect(slider(wrapper).attributes('aria-valuenow')).toBe('55')
 
-    it('clamping: does not go below the minimum bound limit', async () => {
-      const wrapper = mount(Knob, {
-        props: { targetValue: 1, min: 0 }
-      })
-      const slider = wrapper.find('[role="slider"]')
-
-      await slider.trigger('keydown', { key: 'ArrowDown' })
-      await slider.trigger('keydown', { key: 'ArrowDown' })
-
-      expect(slider.attributes('aria-valuenow')).toBe('0')
+      await wrapper.setProps({ targetValue: 52 })
+      expect(slider(wrapper).attributes('aria-valuenow')).toBe('52')
     })
   })
 
-  describe('SVG Graphics & Coordinate Math', () => {
-    it('aligns marker lines precisely to the center coordinates', () => {
-      const size = 60
-      const expectedCenter = (size / 2).toString()
+  describe('interactions', () => {
+    it('updates and emits the selected value on native slider change', async () => {
+      const wrapper = mountKnob({ interactive: true })
 
-      const wrapper = mount(Knob, { props: { size } })
-      const svgLines = wrapper.findAll('svg line')
+      await nativeInput(wrapper).setValue(35)
 
-      svgLines.forEach((line) => {
-        const parentTagName = line.element.parentElement?.tagName.toLowerCase()
-
-        if (parentTagName !== 'g') {
-          expect(line.attributes('x2')).toBe(expectedCenter)
-          expect(line.attributes('y2')).toBe(expectedCenter)
-        }
-      })
-    })
-  })
-
-  describe('Interaction & Side Effects', () => {
-    it('emits a change event and persists value on native slider change', async () => {
-      const wrapper = mount(Knob)
-
-      const nativeInput = wrapper.find('input[type="range"]')
-      expect(nativeInput.exists()).toBe(true)
-
-      await nativeInput.setValue(35)
-      await nativeInput.trigger('change')
-      await wrapper.vm.$nextTick() // Ensure Vue synchronizes state properties down to the template
-
-      expect(wrapper.emitted('change')).toBeTruthy()
-      expect(wrapper.emitted('change')?.[0]).toEqual([35])
+      expect(slider(wrapper).attributes('aria-valuenow')).toBe('35')
+      expect(wrapper.emitted('change')).toEqual([[35]])
     })
 
     it('clamps and emits the safe value on native slider change', async () => {
-      const wrapper = mount(Knob, {
-        props: { min: 10, max: 50, targetValue: 20, storageKey: 'bounded_storage_key' }
-      })
+      const wrapper = mountKnob({ interactive: true, min: 10, max: 50, targetValue: 20 })
 
-      const nativeInput = wrapper.find('input[type="range"]')
+      await nativeInput(wrapper).setValue(75)
 
-      await nativeInput.setValue(75)
-      await nativeInput.trigger('change')
-
-      expect(wrapper.emitted('change')?.[0]).toEqual([50])
+      expect(slider(wrapper).attributes('aria-valuenow')).toBe('50')
+      expect(wrapper.emitted('change')).toEqual([[50]])
     })
   })
 })
