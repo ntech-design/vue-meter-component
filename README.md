@@ -71,20 +71,6 @@ This component is a flexible UI element to visualize and change temperature data
 
 ---
 
-## Report
-
-### Time:
-- Basic setup (Vite, Git, Frame): 15'
-- UI design: 30'
-- Calculation: 30'
-- Event Handler: 45'
-- Optimization: 30'
-- Unit Tests (AI + Review): 15'
-- Review: 30'
-- Reporting: 15'
-
-TOTAL: 3h 30'
-
 ### Issues:
 - [FIXED] Spend too much time trying to align the min/max markers - solved it by giving the circle a background color
 - [FIXED] Forgot to support dark mode
